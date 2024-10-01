@@ -92,8 +92,8 @@ router.post('/signin',async(c)=>{
     }).$extends(withAccelerate());
      
     const body = await c.req.json();
-
-    const {success} = signinInputValidation.safeParse(body)
+    const {email , password} = body;
+    const {success} = signinInputValidation.safeParse({email, password})
     if(!success){
         return c.json({
             errors: "input must be valid"
@@ -127,7 +127,8 @@ router.post('/signin',async(c)=>{
 
     return c.json({
         message: "User signed in successfully!",
-        token : token
+        token : token,
+        user : user
     })
 })
 

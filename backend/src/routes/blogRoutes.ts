@@ -17,7 +17,7 @@ const router = new Hono<{
 
 router.use("/*",async(c,next)=>{
     try {
-        const header = c.req.header("authorization");
+        const header = c.req.header("Authorization");
     const token = header?.split(" ")[1];
     if(token){
         
@@ -39,7 +39,8 @@ router.use("/*",async(c,next)=>{
     }catch(err){
         c.status(401) 
     return c.json({
-            message : err
+            message : err,
+            error : "kuch gadbad hai"
         })
     }
 
@@ -72,8 +73,14 @@ router.post('/',async(c)=>{
         data : {
                  title : body.title,
                  content : body.content,
-                 authorId : c.get('userId')
-     
+                 authorId : c.get('userId'),
+        },
+        select : {
+            id : true,
+            title : true,
+            content : true,
+            authorId : true,
+            created_at : true,
         }
     })
      
@@ -143,25 +150,27 @@ router.get('/',async(c)=>{
     })
 })
 
-router.get('bulk',async(c)=>{
+router.get('/bulk',async(c)=>{
     
 
      const prisma = new PrismaClient({
         datasourceUrl : c.env.DATABASE_URL,
     }).$extends(withAccelerate())
 
-    const postCount = await prisma.post.count();
-    const skipValue = Math.max(0, Math.floor(Math.random() * (postCount - 5)));
+    // const postCount = await prisma.post.count();
+    // const skipValue = Math.max(0, Math.floor(Math.random() * (postCount - 5)));
 
     const posts = await prisma.post.findMany({  
-        take : 5,
-        orderBy : {
-            authorId : "asc"
-        },
-        skip : skipValue,
         select:{
+            id : true,
             authorId : true,
-            title : true
+            title : true,
+            content : true,
+              author : {
+                select :{
+                    name : true
+                }
+              }
         }
     })
 
@@ -177,10 +186,22 @@ router.get('/:id',async(c)=>{
         datasourceUrl : c.env.DATABASE_URL,
     }).$extends(withAccelerate())
     const id  = c.req.param("id");
+    console.log(id);
 
     const post = await prisma.post.findFirst({
         where : {
             id : id
+        },
+        select:{
+            id : true,
+            authorId : true,
+            title : true,
+            content : true,
+            author : {
+                select :{
+                    name : true
+                }
+            }
         }
     })
 
